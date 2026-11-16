@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  postgres-crediya:
+    image: postgres:16-alpine
+    container_name: crediya-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin_crediya
+      POSTGRES_PASSWORD: password123
+      # Creamos una BD por defecto, luego crearemos la segunda
+      POSTGRES_DB: crediya_auth_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Script de inicialización para crear ambas bases de datos automáticamente
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+
+volumes:
+  postgres_data:
