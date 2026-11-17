@@ -1,0 +1,30 @@
+server:
+  # Puerto exclusivo para el microservicio de Autenticación
+  port: 8081
+
+spring:
+  application:
+    name: crediYaAutenticacionMs
+  datasource:
+    # Conexión al contenedor Docker de PostgreSQL
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/crediya_auth_db}
+    username: ${SPRING_DATASOURCE_USERNAME:admin_crediya}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    databasePlatform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      # Crea y actualiza automáticamente las tablas en Postgres según nuestras entidades
+      ddl-auto: update
+    # Imprime en consola las consultas SQL ejecutadas (útil para aprender y depurar)
+    show-sql: true
+
+# Rutas para la documentación interactiva Swagger
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+cors:
+  allowed-origins: "http://localhost:4200,http://localhost:8080,http://localhost:8081"
