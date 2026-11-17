@@ -1,0 +1,9 @@
+
+dependencies {
+	implementation 'org.reactivecommons.utils:object-mapper:0.1.0'
+
+	// Driver oficial para conectar Spring Boot con PostgreSQL
+    runtimeOnly 'org.postgresql:postgresql'
+    // Herramientas para validación de datos (@NotBlank, @Email, etc.)
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+}
