@@ -1,0 +1,67 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: "crediya-prestamos-ms"
+  devtools:
+    add-properties: false
+  profiles:
+    include: null
+  datasource:
+    url: "jdbc:postgresql://localhost:5432/crediya_prestamos_db"
+    username: "admin_crediya"
+    password: "password123"
+    driverClassName: "org.postgresql.Driver"
+  jpa:
+    databasePlatform: "org.hibernate.dialect.PostgreSQLDialect"
+    hibernate:
+      ddl-auto: "update"
+    show-sql: true
+
+adapter:
+  restconsumer:
+    url: "http://localhost:8081"
+
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "health,prometheus"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      testGet:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: "2s"
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: "10s"
+      testPost:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: "2s"
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: "10s"
+
+springdoc:
+  swagger-ui.path: "/v3/swagger-ui.html"
+  api-docs.path: "/v3/api-docs"
+  show-actuator: true
+
+cors:
+  allowed-origins: "http://localhost:4200,http://localhost:8081,http://localhost:8082"

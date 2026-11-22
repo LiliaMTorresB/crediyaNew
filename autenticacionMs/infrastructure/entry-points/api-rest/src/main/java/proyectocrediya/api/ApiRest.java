@@ -11,11 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import proyectocrediya.api.dto.RegistroUsuarioRequest;
 import proyectocrediya.api.dto.UsuarioResponse;
 import proyectocrediya.model.usuario.Usuario;
+import proyectocrediya.usecase.buscarusuario.BuscarUsuarioUseCase;
 import proyectocrediya.usecase.registrarusuario.RegistrarUsuarioUseCase;
 
-/**
- * Punto de entrada REST para la gestión de usuarios en CrediYa.
- */
 @Slf4j
 @RestController
 @RequestMapping(value = "/api/v1/usuarios", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -24,6 +22,7 @@ import proyectocrediya.usecase.registrarusuario.RegistrarUsuarioUseCase;
 public class ApiRest {
 
     private final RegistrarUsuarioUseCase registrarUsuarioUseCase;
+    private final BuscarUsuarioUseCase buscarUsuarioUseCase;
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Registrar un nuevo usuario", description = "Crea un solicitante o usuario en el sistema validando correo único y rango salarial.")
@@ -45,20 +44,35 @@ public class ApiRest {
 
         Usuario registrado = registrarUsuarioUseCase.ejecutar(usuarioDominio);
 
-        UsuarioResponse response = UsuarioResponse.builder()
-                .id(registrado.getId())
-                .nombres(registrado.getNombres())
-                .apellidos(registrado.getApellidos())
-                .documentoIdentidad(registrado.getDocumentoIdentidad())
-                .fechaNacimiento(registrado.getFechaNacimiento())
-                .direccion(registrado.getDireccion())
-                .telefono(registrado.getTelefono())
-                .correoElectronico(registrado.getCorreoElectronico())
-                .salarioBase(registrado.getSalarioBase())
-                .rol(registrado.getRol())
-                .build();
-
         log.info("Usuario registrado exitosamente con ID: {}", registrado.getId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(registrado));
+    }
+
+    @GetMapping("/documento/{documentoIdentidad}")
+    @Operation(summary = "Consultar usuario por documento de identidad", description = "Busca un usuario registrado por su número de documento.")
+    public ResponseEntity<UsuarioResponse> buscarPorDocumento(@PathVariable("documentoIdentidad") String documentoIdentidad) {
+        log.info("Iniciando petición GET /api/v1/usuarios/documento/{}", documentoIdentidad);
+
+        return buscarUsuarioUseCase.buscarPorDocumento(documentoIdentidad)
+                .map(usuario -> ResponseEntity.ok(toResponse(usuario)))
+                .orElseGet(() -> {
+                    log.warn("No se encontró usuario con documento: {}", documentoIdentidad);
+                    return ResponseEntity.notFound().build();
+                });
+    }
+
+    private UsuarioResponse toResponse(Usuario usuario) {
+        return UsuarioResponse.builder()
+                .id(usuario.getId())
+                .nombres(usuario.getNombres())
+                .apellidos(usuario.getApellidos())
+                .documentoIdentidad(usuario.getDocumentoIdentidad())
+                .fechaNacimiento(usuario.getFechaNacimiento())
+                .direccion(usuario.getDireccion())
+                .telefono(usuario.getTelefono())
+                .correoElectronico(usuario.getCorreoElectronico())
+                .salarioBase(usuario.getSalarioBase())
+                .rol(usuario.getRol())
+                .build();
     }
 }
