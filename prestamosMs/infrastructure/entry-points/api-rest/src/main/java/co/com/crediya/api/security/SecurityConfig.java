@@ -13,6 +13,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * Configuración de seguridad Stateless basada en JWT para el microservicio de préstamos.
+ */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -34,12 +37,15 @@ public class SecurityConfig {
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                    response.getWriter().write("{\"status\":403,\"error\":\"Acceso denegado\",\"message\":\"Solo un usuario con rol cliente/solicitante puede crear solicitudes de préstamo.\"}");
+                    response.getWriter().write("{\"status\":403,\"error\":\"Acceso denegado\",\"message\":\"No tiene los permisos (rol) necesarios para acceder a este recurso.\"}");
                 })
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/swagger-ui.html", "/v3/api-docs/**", "/actuator/**").permitAll()
+                // HU03: Solo clientes/solicitantes pueden crear solicitudes de préstamo
                 .requestMatchers(HttpMethod.POST, "/api/v1/solicitud").hasAnyRole("SOLICITANTE", "CLIENTE")
+                // HU04: Solo usuarios con rol ASESOR pueden listar solicitudes para revisión manual
+                .requestMatchers(HttpMethod.GET, "/api/v1/solicitud").hasRole("ASESOR")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

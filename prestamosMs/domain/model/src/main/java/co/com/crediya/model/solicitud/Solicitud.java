@@ -4,8 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 
+/**
+ * Entidad principal de dominio que representa una solicitud de préstamo.
+ */
 @Data
 @Builder(toBuilder = true)
 @NoArgsConstructor
@@ -20,4 +24,5 @@ public class Solicitud {
     private String nombreEstado;
     private Long idTipoPrestamo;
     private String nombreTipoPrestamo;
+    private BigDecimal tasaInteres;
 }
