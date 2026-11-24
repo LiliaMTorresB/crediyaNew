@@ -28,3 +28,8 @@ springdoc:
 
 cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080,http://localhost:8081"
+
+
+jwt:
+  secret: ${JWT_SECRET:CrediYaClaveSecretaSuperSeguraParaFirmarTokensJWT2026!}
+  expiration-ms: 86400000

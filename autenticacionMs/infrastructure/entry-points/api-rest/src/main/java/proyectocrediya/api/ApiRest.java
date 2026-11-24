@@ -1,6 +1,9 @@
 package proyectocrediya.api;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,24 +11,42 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import proyectocrediya.api.dto.LoginRequest;
+import proyectocrediya.api.dto.LoginResponse;
 import proyectocrediya.api.dto.RegistroUsuarioRequest;
 import proyectocrediya.api.dto.UsuarioResponse;
 import proyectocrediya.model.usuario.Usuario;
 import proyectocrediya.usecase.buscarusuario.BuscarUsuarioUseCase;
+import proyectocrediya.usecase.login.LoginUseCase;
 import proyectocrediya.usecase.registrarusuario.RegistrarUsuarioUseCase;
 
 @Slf4j
 @RestController
-@RequestMapping(value = "/api/v1/usuarios", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
-@Tag(name = "Usuarios", description = "Operaciones de registro y consulta de usuarios")
+@SecurityScheme(name = "bearerAuth", type = SecuritySchemeType.HTTP, scheme = "bearer", bearerFormat = "JWT")
+@Tag(name = "Autenticación y Usuarios", description = "Login JWT, registro y consulta de usuarios")
 public class ApiRest {
 
     private final RegistrarUsuarioUseCase registrarUsuarioUseCase;
     private final BuscarUsuarioUseCase buscarUsuarioUseCase;
+    private final LoginUseCase loginUseCase;
 
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Registrar un nuevo usuario", description = "Crea un solicitante o usuario en el sistema validando correo único y rango salarial.")
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Iniciar sesión", description = "Autentica usuario por correo y contraseña y retorna un token JWT.")
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+        log.info("Intento de inicio de sesión para correo: {}", request.getCorreoElectronico());
+        String token = loginUseCase.ejecutar(request.getCorreoElectronico(), request.getPassword());
+        log.info("Inicio de sesión exitoso para correo: {}", request.getCorreoElectronico());
+        return ResponseEntity.ok(LoginResponse.builder()
+                .token(token)
+                .tipo("Bearer")
+                .build());
+    }
+
+    @PostMapping(value = "/usuarios", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Registrar un nuevo usuario", description = "Requiere rol ADMIN o ASESOR. Crea un usuario validando correo único y rango salarial.")
     public ResponseEntity<UsuarioResponse> registrarUsuario(@RequestBody RegistroUsuarioRequest request) {
         log.info("Iniciando petición POST /api/v1/usuarios para correo: {}", request.getCorreoElectronico());
 
@@ -48,8 +69,9 @@ public class ApiRest {
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(registrado));
     }
 
-    @GetMapping("/documento/{documentoIdentidad}")
-    @Operation(summary = "Consultar usuario por documento de identidad", description = "Busca un usuario registrado por su número de documento.")
+    @GetMapping("/usuarios/documento/{documentoIdentidad}")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Consultar usuario por documento de identidad", description = "Requiere estar autenticado. Busca un usuario registrado por su número de documento.")
     public ResponseEntity<UsuarioResponse> buscarPorDocumento(@PathVariable("documentoIdentidad") String documentoIdentidad) {
         log.info("Iniciando petición GET /api/v1/usuarios/documento/{}", documentoIdentidad);
 
@@ -76,3 +98,4 @@ public class ApiRest {
                 .build();
     }
 }
+

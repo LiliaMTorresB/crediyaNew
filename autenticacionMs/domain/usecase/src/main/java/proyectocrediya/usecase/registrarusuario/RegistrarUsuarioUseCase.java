@@ -3,6 +3,7 @@ package proyectocrediya.usecase.registrarusuario;
 import lombok.RequiredArgsConstructor;
 import proyectocrediya.model.exceptions.BusinessException;
 import proyectocrediya.model.usuario.Usuario;
+import proyectocrediya.model.usuario.gateways.PasswordEncoderGateway;
 import proyectocrediya.model.usuario.gateways.UsuarioRepository;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ import java.util.regex.Pattern;
 public class RegistrarUsuarioUseCase {
 
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoderGateway passwordEncoderGateway;
 
     // Constantes de negocio para evitar "números mágicos" (buena práctica SonarLint)
     private static final BigDecimal SALARIO_MINIMO_PERMITIDO = BigDecimal.ZERO;
@@ -36,7 +38,12 @@ public class RegistrarUsuarioUseCase {
         // Si no viene un rol definido, se asigna SOLICITANTE por defecto
         if (usuario.getRol() == null || usuario.getRol().isBlank()) {
             usuario.setRol(ROL_POR_DEFECTO);
+        } else {
+            usuario.setRol(usuario.getRol().trim().toUpperCase());
         }
+
+        // Encriptar la contraseña antes de persistir en BD
+        usuario.setPassword(passwordEncoderGateway.encode(usuario.getPassword()));
 
         return usuarioRepository.guardar(usuario);
     }
@@ -50,6 +57,9 @@ public class RegistrarUsuarioUseCase {
         }
         if (esNuloOVacio(usuario.getCorreoElectronico())) {
             throw new BusinessException("El campo 'correo_electronico' es obligatorio.");
+        }
+        if (esNuloOVacio(usuario.getPassword())) {
+            throw new BusinessException("El campo 'password' es obligatorio.");
         }
         if (usuario.getSalarioBase() == null) {
             throw new BusinessException("El campo 'salario_base' es obligatorio.");
